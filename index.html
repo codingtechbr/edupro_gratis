@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EduPro — Sistema Escolar Gratuito</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#0A0E1A;--surf:#111827;--card:#1A2235;--card2:#202D42;
+  --brd:#263248;--brd2:#2E3D58;--pri:#4F8EF7;--pri2:#3B6FD4;
+  --grn:#22C55E;--grn-bg:#052E16;--red:#EF4444;--red-bg:#2D0A0A;
+  --amb:#F59E0B;--amb-bg:#2D1A00;--pur:#A78BFA;--pur-bg:#1E1040;
+  --txt:#E2E8F0;--txt2:#94A3B8;--txt3:#4B5B72;--wht:#FFF;
+  --ai:linear-gradient(135deg,#4F8EF7,#A78BFA);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+input,textarea,select{background:var(--card2);border:1px solid var(--brd2);color:var(--txt);
+  border-radius:8px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;
+  width:100%;outline:none;transition:border .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--pri)}
+textarea{resize:vertical;min-height:80px}
+label{font-size:12px;color:var(--txt3);display:block;margin-bottom:5px;font-weight:500}
+.fg{margin-bottom:14px}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+button{cursor:pointer;font-family:'DM Sans',sans-serif}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:10px}
+
+.btn{padding:8px 16px;border-radius:8px;border:none;font-size:13px;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-pri{background:var(--pri);color:#fff}.btn-pri:hover{background:var(--pri2)}
+.btn-ghost{background:var(--card2);color:var(--txt);border:1px solid var(--brd2)}.btn-ghost:hover{background:var(--brd2)}
+.btn-grn{background:var(--grn);color:#000}
+.btn-red{background:var(--red-bg);color:var(--red);border:1px solid var(--red)}
+.btn-ai{background:var(--ai);color:#fff;font-weight:700;box-shadow:0 4px 20px rgba(79,142,247,.3)}
+.btn-ai:hover{opacity:.9;transform:translateY(-1px)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-xs{padding:3px 9px;font-size:11px}
+
+/* LAYOUT */
+#setup-screen,#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 30% 40%,rgba(79,142,247,.12),transparent 60%),var(--bg)}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:228px;background:var(--surf);border-right:1px solid var(--brd);display:flex;flex-direction:column;flex-shrink:0}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.page{flex:1;overflow-y:auto;padding:22px 24px;display:none}
+.page.active{display:block}
+
+/* SETUP */
+.setup-box{background:var(--surf);border:1px solid var(--brd2);border-radius:20px;padding:44px 40px;width:540px;max-width:95vw}
+.box-logo{text-align:center;margin-bottom:28px}
+.box-logo h1{font-family:'DM Serif Display',serif;font-size:34px;color:var(--wht)}
+.box-logo p{font-size:13px;color:var(--txt3);margin-top:4px}
+.step{background:var(--card2);border:1px solid var(--brd2);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--pri);border-radius:50%;font-size:12px;font-weight:700;color:#fff;margin-right:8px;flex-shrink:0}
+.step-title{font-size:13px;font-weight:600;display:flex;align-items:center;margin-bottom:8px}
+.step-body{font-size:12px;color:var(--txt2);line-height:1.6;padding-left:32px}
+.code-inline{background:var(--card);border:1px solid var(--brd);border-radius:5px;padding:2px 7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--pri)}
+.msg-err{background:var(--red-bg);border:1px solid var(--red);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:14px;display:none}
+.msg-ok{background:var(--grn-bg);border:1px solid var(--grn);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--grn);margin-bottom:14px;display:none}
+
+/* LOGIN */
+.login-box{background:var(--surf);border:1px solid var(--brd2);border-radius:20px;padding:44px 40px;width:420px;max-width:95vw}
+
+/* SIDEBAR */
+.logo{padding:20px 16px 16px;border-bottom:1px solid var(--brd)}
+.logo h2{font-family:'DM Serif Display',serif;font-size:20px;color:var(--wht)}
+.logo p{font-size:10px;color:var(--txt3);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.nav{flex:1;padding:10px 8px;overflow-y:auto}
+.nav-sec{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:1.5px;padding:10px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--txt2);transition:all .15s;margin-bottom:2px;border:1px solid transparent}
+.nav-item:hover{background:var(--card);color:var(--txt)}
+.nav-item.active{background:var(--card2);color:var(--pri);border-color:var(--brd2)}
+.nav-item .ico{font-size:15px;width:18px;text-align:center}
+.nb{margin-left:auto;background:var(--pri);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:700}
+.sb-footer{padding:12px;border-top:1px solid var(--brd)}
+.sb-user{display:flex;align-items:center;gap:9px;background:var(--card);border-radius:10px;padding:9px 12px}
+.sb-av{width:32px;height:32px;border-radius:50%;background:var(--ai);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+
+/* TOPBAR */
+.topbar{background:var(--surf);border-bottom:1px solid var(--brd);padding:0 22px;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.pg-title{font-family:'DM Serif Display',serif;font-size:19px;color:var(--wht)}
+.pg-sub{font-size:11px;color:var(--txt3)}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--brd);border-radius:12px;overflow:hidden}
+.card-hdr{padding:13px 17px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between}
+.card-ttl{font-size:14px;font-weight:600}
+.card-body{padding:17px}
+.ai-glow{border:1px solid transparent;background:linear-gradient(var(--card2),var(--card2)) padding-box,var(--ai) border-box;border-radius:12px}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:15px 17px;border-top:3px solid}
+.stat.bl{border-color:var(--pri)}.stat.gr{border-color:var(--grn)}.stat.am{border-color:var(--amb)}.stat.pu{border-color:var(--pur)}
+.stat-val{font-size:26px;font-weight:700;font-family:'DM Serif Display',serif;margin-top:4px}
+.stat-lbl{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+
+/* TABLE */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:var(--card2);padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--txt3);font-weight:600;border-bottom:1px solid var(--brd2)}
+td{padding:10px 12px;border-bottom:1px solid var(--brd);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* CHAMADA */
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:9px}
+.ac{background:var(--card2);border:2px solid var(--brd2);border-radius:10px;padding:12px;cursor:pointer;transition:all .15s;position:relative;user-select:none}
+.ac:hover{border-color:var(--pri)}
+.ac.presente{border-color:var(--grn);background:var(--grn-bg)}
+.ac.falta{border-color:var(--red);background:var(--red-bg)}
+.ac.justificado{border-color:var(--amb);background:var(--amb-bg)}
+.ac-av{width:38px;height:38px;border-radius:50%;background:var(--ai);display:flex;align-items:center;justify-content:center;font-size:15px;margin-bottom:6px}
+.ac-nm{font-size:13px;font-weight:600}
+.ac-num{font-size:11px;color:var(--txt3)}
+.ac-st{position:absolute;top:8px;right:8px;font-size:16px}
+
+/* FREQ BAR */
+.fb-w{background:var(--card2);border-radius:6px;height:7px;overflow:hidden;margin-top:3px}
+.fb{height:100%;border-radius:6px;transition:width .4s}
+.fg_{background:var(--grn)}.fa_{background:var(--amb)}.fr_{background:var(--red)}
+
+/* BADGES */
+.badge{font-size:11px;padding:2px 8px;border-radius:12px;font-weight:600}
+.b-g{background:var(--grn-bg);color:var(--grn)}.b-a{background:var(--amb-bg);color:var(--amb)}
+.b-r{background:var(--red-bg);color:var(--red)}.b-b{background:#0A2040;color:var(--pri)}
+
+/* AI CHAT */
+.ai-wrap{display:flex;flex-direction:column;height:calc(100vh - 54px)}
+.ai-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.msg{display:flex;gap:9px;animation:fadeUp .25s ease}
+.msg.user{flex-direction:row-reverse}
+.msg-av{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px}
+.msg.ai .msg-av{background:var(--ai)}.msg.user .msg-av{background:var(--pri)}
+.msg-bbl{max-width:76%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.65}
+.msg.ai .msg-bbl{background:var(--card2);border:1px solid var(--brd2);border-radius:3px 12px 12px 12px}
+.msg.user .msg-bbl{background:var(--pri);color:#fff;border-radius:12px 3px 12px 12px}
+.msg-ts{font-size:10px;color:var(--txt3);margin-top:3px}
+.ai-inp{padding:13px 17px;border-top:1px solid var(--brd);background:var(--surf)}
+.ai-row{display:flex;gap:9px;align-items:flex-end}
+.ai-row textarea{min-height:40px;max-height:120px}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:9px}
+.chip{background:var(--card2);border:1px solid var(--brd2);padding:4px 11px;border-radius:20px;font-size:12px;cursor:pointer;transition:all .15s;color:var(--txt2)}
+.chip:hover{border-color:var(--pri);color:var(--pri)}
+.typing{display:flex;gap:4px;align-items:center}
+.td{width:6px;height:6px;border-radius:50%;background:var(--txt3);animation:bounce 1.2s infinite}
+.td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
+
+/* NOTAS */
+.nota-card{background:var(--card2);border:1px solid var(--brd2);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.nota-card:hover{border-color:var(--pri)}
+.nota-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.nota-al{font-size:13px;font-weight:600}
+.nota-dt{font-size:11px;color:var(--txt3);font-family:'JetBrains Mono',monospace}
+.nota-txt{font-size:13px;color:var(--txt2);line-height:1.6}
+.tag{font-size:11px;padding:2px 8px;border-radius:12px;font-weight:500;display:inline-block;margin-top:6px}
+.tag.aprendizado{background:#0D2D0D;color:var(--grn)}.tag.comportamento{background:var(--pur-bg);color:var(--pur)}
+.tag.atencao{background:var(--amb-bg);color:var(--amb)}.tag.elogio{background:#0A2040;color:var(--pri)}
+
+/* PLANO */
+.plano-result{background:var(--card2);border:1px solid var(--brd2);border-radius:10px;padding:17px;white-space:pre-wrap;font-size:13px;line-height:1.8;font-family:'JetBrains Mono',monospace;color:var(--txt);max-height:480px;overflow-y:auto}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(4px)}
+.overlay.open{display:flex}
+.modal{background:var(--surf);border:1px solid var(--brd2);border-radius:16px;width:480px;max-width:95vw;animation:slideUp .2s ease}
+.modal-hdr{padding:17px 21px 13px;border-bottom:1px solid var(--brd);display:flex;justify-content:space-between;align-items:center}
+.modal-ttl{font-size:15px;font-weight:700}
+.modal-body{padding:21px}
+.modal-ft{padding:13px 21px;border-top:1px solid var(--brd);display:flex;justify-content:flex-end;gap:9px}
+.x-btn{background:none;border:none;color:var(--txt3);font-size:20px;cursor:pointer}
+
+/* TOAST */
+.toasts{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:7px}
+.toast{background:var(--card2);border:1px solid var(--brd2);border-radius:10px;padding:10px 14px;min-width:250px;display:flex;align-items:center;gap:9px;animation:slideR .25s ease;font-size:13px}
+.toast.ok{border-color:var(--grn)}.toast.err{border-color:var(--red)}.toast.info{border-color:var(--pri)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes slideR{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;animation:spin 1s linear infinite}
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP (primeira vez) ══════════════════════════════════ -->
+<div id="setup-screen">
+  <div class="setup-box">
+    <div class="box-logo">
+      <h1>🏫 EduPro</h1>
+      <p>Configure o sistema uma única vez</p>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">1</span>Crie a planilha no Google Sheets</div>
+      <div class="step-body">
+        Acesse <strong style="color:var(--pri)">sheets.google.com</strong> → Criar planilha em branco → Renomeie para <span class="code-inline">EduPro</span><br><br>
+        Copie o ID da URL: <span class="code-inline">docs.google.com/spreadsheets/d/<strong style="color:var(--amb)">ID_AQUI</strong>/edit</span>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">2</span>Configure o Google Apps Script</div>
+      <div class="step-body">
+        Na planilha: <strong>Extensões → Apps Script</strong><br>
+        Cole o código do arquivo <span class="code-inline">Code.gs</span><br>
+        Troque <span class="code-inline">COLE_O_ID_DA_PLANILHA_AQUI</span> pelo ID copiado<br>
+        <strong>Implantar → Novo Implantação → Aplicativo da Web</strong><br>
+        Acesso: <em>Qualquer pessoa</em> → Implantar → Copie a URL
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">3</span>Cole a URL do Apps Script abaixo</div>
+      <div class="step-body" style="padding-left:0;margin-top:8px">
+        <input type="text" id="setup-url" placeholder="https://script.google.com/macros/s/.../exec" style="margin-top:6px">
+      </div>
+    </div>
+
+    <div class="msg-err" id="setup-err"></div>
+    <div class="msg-ok" id="setup-ok"></div>
+
+    <button class="btn btn-ai" style="width:100%;justify-content:center;padding:12px;margin-top:8px" onclick="testarSetup()" id="setup-btn">
+      ✅ Testar e Salvar Configuração
+    </button>
+    <p style="text-align:center;font-size:12px;color:var(--txt3);margin-top:14px">
+      Após configurar, você será redirecionado para o cadastro
+    </p>
+  </div>
+</div>
+
+<!-- ══ LOGIN / CADASTRO ══════════════════════════════════════ -->
+<div id="login-screen" style="display:none">
+  <div class="login-box">
+    <div class="box-logo" style="margin-bottom:24px">
+      <h1>🏫 EduPro</h1>
+      <p id="escola-nome-login">Sistema Pedagógico Inteligente</p>
+    </div>
+
+    <!-- Abas -->
+    <div style="display:flex;background:var(--card2);border-radius:10px;padding:4px;margin-bottom:20px">
+      <button class="btn" id="tab-login" onclick="toggleTab('login')" style="flex:1;justify-content:center;background:var(--card);color:var(--txt)">Entrar</button>
+      <button class="btn" id="tab-cad" onclick="toggleTab('cad')" style="flex:1;justify-content:center;background:transparent;color:var(--txt3)">Cadastrar</button>
+    </div>
+
+    <!-- Login -->
+    <div id="form-login">
+      <div class="msg-err" id="login-err"></div>
+      <div class="fg"><label>E-mail</label><input type="email" id="li-email" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
+      <div class="fg"><label>Senha</label><input type="password" id="li-senha" placeholder="••••••••" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
+      <button class="btn btn-pri" style="width:100%;justify-content:center;padding:11px" onclick="fazerLogin()" id="login-btn">Entrar →</button>
+    </div>
+
+    <!-- Cadastro -->
+    <div id="form-cad" style="display:none">
+      <div class="msg-err" id="cad-err"></div>
+      <div class="fg"><label>Nome completo</label><input type="text" id="cad-nome" placeholder="Seu nome"></div>
+      <div class="fg"><label>E-mail</label><input type="email" id="cad-email" placeholder="seu@email.com"></div>
+      <div class="r2">
+        <div class="fg"><label>Senha</label><input type="password" id="cad-senha" placeholder="Mínimo 6 caracteres"></div>
+        <div class="fg"><label>Turma</label><input type="text" id="cad-turma" placeholder="Ex: 3A"></div>
+      </div>
+      <div class="fg"><label>Código de acesso</label><input type="text" id="cad-codigo" placeholder="Peça ao administrador"></div>
+      <button class="btn btn-grn" style="width:100%;justify-content:center;padding:11px" onclick="fazerCadastro()" id="cad-btn">Criar conta →</button>
+    </div>
+
+    <button onclick="resetarSetup()" style="display:block;margin:14px auto 0;background:none;border:none;color:var(--txt3);font-size:12px;cursor:pointer">Reconfigurar sistema</button>
+  </div>
+</div>
+
+<!-- ══ APP ═══════════════════════════════════════════════════ -->
+<div class="app" id="app" style="display:none">
+  <aside class="sidebar">
+    <div class="logo"><h2>EduPro</h2><p id="sb-escola">—</p></div>
+    <nav class="nav">
+      <div class="nav-sec">Principal</div>
+      <div class="nav-item active" onclick="go('dashboard')"><span class="ico">📊</span>Dashboard</div>
+      <div class="nav-item" onclick="go('chamada')"><span class="ico">✅</span>Chamada<span class="nb" id="nb-ch">0</span></div>
+      <div class="nav-item" onclick="go('frequencia')"><span class="ico">📈</span>Frequência</div>
+      <div class="nav-sec">Pedagógico</div>
+      <div class="nav-item" onclick="go('planos')"><span class="ico">📚</span>Planos de Aula</div>
+      <div class="nav-item" onclick="go('anotacoes')"><span class="ico">📝</span>Anotações</div>
+      <div class="nav-sec">IA</div>
+      <div class="nav-item" onclick="go('ia')"><span class="ico">🤖</span>Assistente IA</div>
+      <div class="nav-item" onclick="go('relatorios')"><span class="ico">✨</span>Relatórios IA</div>
+      <div class="nav-sec">Exportar</div>
+      <div class="nav-item" onclick="exportFreq()"><span class="ico">📊</span>Excel Frequência</div>
+      <div class="nav-item" onclick="exportNotas()"><span class="ico">📝</span>Excel Anotações</div>
+      <div class="nav-item" onclick="exportPlanos()"><span class="ico">📚</span>Excel Planos</div>
+      <div class="nav-sec">Conta</div>
+      <div class="nav-item" onclick="go('config')"><span class="ico">⚙️</span>Configurações</div>
+      <div class="nav-item" id="nav-admin" style="display:none" onclick="go('admin')"><span class="ico">👑</span>Admin</div>
+      <div class="nav-item" onclick="sair()"><span class="ico">🚪</span>Sair</div>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-av">👩‍🏫</div>
+        <div><div style="font-size:12px;font-weight:600" id="sb-nome">—</div><div style="font-size:11px;color:var(--txt3)" id="sb-turma">—</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div><div class="pg-title" id="pg-ttl">Dashboard</div><div class="pg-sub" id="pg-sub">Visão geral</div></div>
+      <span style="font-size:12px;color:var(--txt3);font-family:'JetBrains Mono',monospace" id="relogio"></span>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="stats">
+        <div class="stat bl"><div style="font-size:20px">👥</div><div class="stat-val" id="s-al">—</div><div class="stat-lbl">Alunos</div></div>
+        <div class="stat gr"><div style="font-size:20px">✅</div><div class="stat-val" id="s-pr">—</div><div class="stat-lbl">Presentes Hoje</div></div>
+        <div class="stat am"><div style="font-size:20px">📚</div><div class="stat-val" id="s-pl">—</div><div class="stat-lbl">Planos</div></div>
+        <div class="stat pu"><div style="font-size:20px">📝</div><div class="stat-val" id="s-no">—</div><div class="stat-lbl">Anotações</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card"><div class="card-hdr"><span class="card-ttl">📝 Últimas Anotações</span><button class="btn btn-ghost btn-sm" onclick="go('anotacoes')">Ver todas</button></div><div id="dash-notas" style="padding:0"></div></div>
+        <div class="card"><div class="card-hdr"><span class="card-ttl">✅ Chamada de Hoje</span><button class="btn btn-pri btn-sm" onclick="go('chamada')">Fazer Chamada</button></div><div id="dash-chamada" style="padding:0"></div></div>
+        <div class="card" style="grid-column:span 2"><div class="card-hdr"><span class="card-ttl">📚 Planos Recentes</span><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="exportPlanos()">📊 Excel</button><button class="btn btn-ai btn-sm" onclick="go('planos')">✨ Criar com IA</button></div></div><div class="tw"><table><thead><tr><th>Tema</th><th>Matéria</th><th>Série</th><th>Data</th></tr></thead><tbody id="dash-planos"></tbody></table></div></div>
+      </div>
+    </div>
+
+    <!-- CHAMADA -->
+    <div id="page-chamada" class="page">
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:flex-end">
+        <div class="fg" style="margin:0;flex:1;min-width:130px"><label>Data</label><input type="date" id="ch-data" onchange="carregarChamada()"></div>
+        <div class="fg" style="margin:0;flex:2;min-width:150px"><label>Matéria</label><input type="text" id="ch-mat" placeholder="Ex: Matemática"></div>
+        <button class="btn btn-pri" onclick="salvarChamada()">💾 Salvar</button>
+        <button class="btn btn-ghost" onclick="marcarTodos('presente')">✅ Todos Presentes</button>
+        <button class="btn btn-ghost" onclick="abrirModal('modal-aluno')">➕ Aluno</button>
+        <button class="btn btn-ghost" onclick="exportFreq()">📊 Excel</button>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:12px;font-size:12px;color:var(--txt2)">
+        <span>🟢 Presente</span><span>🔴 Falta</span><span>🟡 Justificado</span>
+      </div>
+      <div class="cg" id="ch-grid"></div>
+      <div style="margin-top:14px;background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:13px 17px;display:flex;gap:20px;flex-wrap:wrap">
+        <div><span style="color:var(--txt3);font-size:11px">PRESENTES</span><br><span style="font-size:22px;font-weight:700;color:var(--grn)" id="cnt-p">0</span></div>
+        <div><span style="color:var(--txt3);font-size:11px">FALTAS</span><br><span style="font-size:22px;font-weight:700;color:var(--red)" id="cnt-f">0</span></div>
+        <div><span style="color:var(--txt3);font-size:11px">JUSTIFICADOS</span><br><span style="font-size:22px;font-weight:700;color:var(--amb)" id="cnt-j">0</span></div>
+        <div><span style="color:var(--txt3);font-size:11px">FREQUÊNCIA</span><br><span style="font-size:22px;font-weight:700;color:var(--pri)" id="cnt-pct">—</span></div>
+      </div>
+    </div>
+
+    <!-- FREQUÊNCIA -->
+    <div id="page-frequencia" class="page">
+      <div class="card"><div class="card-hdr"><span class="card-ttl">📈 Frequência por Aluno</span><button class="btn btn-ghost btn-sm" onclick="exportFreq()">📊 Excel</button></div>
+      <div class="tw"><table><thead><tr><th>#</th><th>Aluno</th><th>Presenças</th><th>Faltas</th><th>Freq.%</th><th>Status</th></tr></thead><tbody id="freq-tb"></tbody></table></div></div>
+    </div>
+
+    <!-- PLANOS -->
+    <div id="page-planos" class="page">
+      <div style="display:grid;grid-template-columns:350px 1fr;gap:16px;height:calc(100vh - 100px)">
+        <div style="overflow-y:auto;display:flex;flex-direction:column;gap:12px">
+          <div class="card ai-glow">
+            <div class="card-body">
+              <div style="background:var(--ai);border-radius:10px;padding:13px 17px;margin-bottom:14px;display:flex;align-items:center;gap:11px">
+                <span style="font-size:26px">✨</span>
+                <div><div style="font-size:14px;font-weight:700;color:#fff">Gerador com IA</div><div style="font-size:12px;color:rgba(255,255,255,.75)">Preencha e gere automaticamente</div></div>
+              </div>
+              <div class="fg"><label>Matéria</label><input type="text" id="pl-mat" placeholder="Ex: Matemática"></div>
+              <div class="r2">
+                <div class="fg"><label>Série</label><input type="text" id="pl-ser" placeholder="3º ano"></div>
+                <div class="fg"><label>Duração</label><input type="text" id="pl-dur" placeholder="50 min"></div>
+              </div>
+              <div class="fg"><label>Tema</label><input type="text" id="pl-tema" placeholder="Ex: Frações"></div>
+              <div class="fg"><label>Objetivo</label><textarea id="pl-obj" rows="2" placeholder="O que os alunos devem aprender?"></textarea></div>
+              <div class="fg"><label>Observações (opcional)</label><textarea id="pl-obs" rows="2" placeholder="Dificuldades da turma..."></textarea></div>
+              <button class="btn btn-ai" style="width:100%;justify-content:center;padding:10px" onclick="gerarPlano()" id="btn-gerar">✨ Gerar Plano com IA</button>
+            </div>
+          </div>
+          <div class="card"><div class="card-hdr"><span class="card-ttl">📁 Salvos</span><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="exportPlanos()">📊</button><button class="btn btn-ghost btn-sm" onclick="carregarPlanos()">🔄</button></div></div><div id="planos-lista" style="max-height:280px;overflow-y:auto"></div></div>
+        </div>
+        <div class="card" style="height:100%;display:flex;flex-direction:column;overflow:hidden">
+          <div class="card-hdr"><span class="card-ttl" id="plano-ttl">📄 Plano Gerado</span>
+            <div id="plano-ac" style="display:none;gap:8px"><button class="btn btn-ghost btn-sm" onclick="salvarPlano()">💾 Salvar</button><button class="btn btn-ghost btn-sm" onclick="copiarPlano()">📋 Copiar</button></div>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:17px">
+            <div id="plano-ph" style="text-align:center;padding:50px 20px;color:var(--txt3)"><div style="font-size:40px;margin-bottom:10px">✨</div><div>Preencha e clique em<br><strong style="color:var(--pri)">Gerar Plano com IA</strong></div></div>
+            <div id="plano-content" class="plano-result" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANOTAÇÕES -->
+    <div id="page-anotacoes" class="page">
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <input type="text" id="busca-nota" placeholder="🔍 Buscar..." oninput="filtrarNotas()" style="flex:1;max-width:280px">
+        <button class="btn btn-pri" onclick="abrirModal('modal-nota')">➕ Nova Anotação</button>
+        <button class="btn btn-ghost" onclick="exportNotas()">📊 Excel</button>
+        <button class="btn btn-ai" onclick="analisarTurmaIA()">✨ Análise IA</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:14px">
+        <div id="notas-lista"></div>
+        <div class="card ai-glow"><div class="card-hdr"><span class="card-ttl">🤖 Análise IA</span></div><div class="card-body" id="analise-content"><div style="text-align:center;padding:24px 0;color:var(--txt3);font-size:13px"><div style="font-size:26px;margin-bottom:8px">🤖</div>Clique em <strong style="color:var(--pur)">Análise IA</strong></div></div></div>
+      </div>
+    </div>
+
+    <!-- IA CHAT -->
+    <div id="page-ia" class="page" style="padding:0;height:calc(100vh - 54px)">
+      <div class="ai-wrap">
+        <div class="ai-msgs" id="ai-msgs"></div>
+        <div class="ai-inp">
+          <div class="chips" id="ai-chips">
+            <div class="chip" onclick="useChip(this)">Crie atividade de matemática</div>
+            <div class="chip" onclick="useChip(this)">Como lidar com aluno agitado?</div>
+            <div class="chip" onclick="useChip(this)">Estratégias de leitura</div>
+            <div class="chip" onclick="useChip(this)">Comunicado para os pais</div>
+          </div>
+          <div class="ai-row">
+            <textarea id="ai-inp" placeholder="Digite sua mensagem..." rows="1"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarIA()}"
+              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+            <button class="btn btn-ai" onclick="enviarIA()" style="flex-shrink:0;padding:9px 14px">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RELATÓRIOS -->
+    <div id="page-relatorios" class="page">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px">
+        <div class="card ai-glow" style="cursor:pointer" onclick="gerarRel('frequencia')"><div class="card-body" style="text-align:center;padding:24px 16px"><div style="font-size:32px;margin-bottom:8px">📊</div><div style="font-size:14px;font-weight:700;margin-bottom:5px">Relatório de Frequência</div><div style="font-size:12px;color:var(--txt3)">Análise completa com IA</div><button class="btn btn-ai btn-sm" style="margin-top:12px;width:100%;justify-content:center">✨ Gerar</button></div></div>
+        <div class="card ai-glow" style="cursor:pointer" onclick="gerarRel('turma')"><div class="card-body" style="text-align:center;padding:24px 16px"><div style="font-size:32px;margin-bottom:8px">👥</div><div style="font-size:14px;font-weight:700;margin-bottom:5px">Relatório da Turma</div><div style="font-size:12px;color:var(--txt3)">Perfil e pontos de atenção</div><button class="btn btn-ai btn-sm" style="margin-top:12px;width:100%;justify-content:center">✨ Gerar</button></div></div>
+        <div class="card ai-glow" style="cursor:pointer" onclick="gerarRel('pais')"><div class="card-body" style="text-align:center;padding:24px 16px"><div style="font-size:32px;margin-bottom:8px">✉️</div><div style="font-size:14px;font-weight:700;margin-bottom:5px">Comunicado para Pais</div><div style="font-size:12px;color:var(--txt3)">Texto formal gerado pela IA</div><button class="btn btn-ai btn-sm" style="margin-top:12px;width:100%;justify-content:center">✨ Gerar</button></div></div>
+      </div>
+      <div class="card" id="rel-card" style="display:none">
+        <div class="card-hdr"><span class="card-ttl" id="rel-ttl">Relatório</span><button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('rel-content').textContent).then(()=>toast('Copiado!','ok'))">📋 Copiar</button></div>
+        <div class="card-body"><div id="rel-content" class="plano-result"></div></div>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="page-config" class="page">
+      <div class="card" style="max-width:500px">
+        <div class="card-hdr"><span class="card-ttl">⚙️ Meu Perfil</span></div>
+        <div class="card-body">
+          <div class="fg"><label>Nome</label><input type="text" id="cfg-nome"></div>
+          <div class="r2"><div class="fg"><label>Turma</label><input type="text" id="cfg-turma"></div><div class="fg"><label>Escola</label><input type="text" id="cfg-escola"></div></div>
+          <div class="fg"><label>🔑 Chave API Anthropic (para IA)</label><input type="password" id="cfg-api" placeholder="sk-ant-..."></div>
+          <div class="fg"><label>Nova Senha (deixe em branco para manter)</label><input type="password" id="cfg-senha" placeholder="••••••••"></div>
+          <div style="background:var(--card2);border-radius:8px;padding:10px;font-size:12px;color:var(--txt3);margin-bottom:14px">
+            💡 Chave API gratuita em <strong style="color:var(--pri)">console.anthropic.com</strong> (tem créditos grátis para novos usuários)
+          </div>
+          <button class="btn btn-pri" style="width:100%;justify-content:center;padding:10px" onclick="salvarConfig()">💾 Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div id="page-admin" class="page">
+      <div class="card"><div class="card-hdr"><span class="card-ttl">👑 Professores</span><button class="btn btn-pri btn-sm" onclick="abrirModal('modal-prof')">➕ Novo</button></div>
+      <div class="tw"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Turma</th><th>Admin</th><th></th></tr></thead><tbody id="prof-tb"></tbody></table></div></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAIS -->
+<div class="overlay" id="modal-nota">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-ttl">📝 Nova Anotação</span><button class="x-btn" onclick="fecharModal('modal-nota')">×</button></div>
+    <div class="modal-body">
+      <div class="r2"><div class="fg"><label>Aluno</label><input type="text" id="n-al" placeholder="Nome do aluno"></div><div class="fg"><label>Categoria</label><select id="n-cat"><option value="aprendizado">📚 Aprendizado</option><option value="comportamento">🧠 Comportamento</option><option value="atencao">⚠️ Atenção</option><option value="elogio">⭐ Elogio</option></select></div></div>
+      <div class="fg"><label>Anotação</label><textarea id="n-txt" rows="4" placeholder="Observação sobre o aluno..."></textarea></div>
+      <button class="btn btn-ai btn-sm" onclick="sugestaoIA()" style="margin-top:4px">✨ Sugestão da IA</button>
+      <div id="sug-ia" style="display:none;margin-top:10px;background:var(--pur-bg);border:1px solid var(--pur);border-radius:8px;padding:11px;font-size:12px;color:var(--txt2);line-height:1.6"></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="fecharModal('modal-nota')">Cancelar</button><button class="btn btn-pri" onclick="salvarNota()">💾 Salvar</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-aluno">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-ttl">👤 Novo Aluno</span><button class="x-btn" onclick="fecharModal('modal-aluno')">×</button></div>
+    <div class="modal-body">
+      <div class="fg"><label>Nome completo</label><input type="text" id="al-nome"></div>
+      <div class="r2"><div class="fg"><label>Número</label><input type="number" id="al-num"></div><div class="fg"><label>Sala</label><input type="text" id="al-sala"></div></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="fecharModal('modal-aluno')">Cancelar</button><button class="btn btn-pri" onclick="salvarAluno()">💾 Salvar</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-prof">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-ttl">👩‍🏫 Novo Professor</span><button class="x-btn" onclick="fecharModal('modal-prof')">×</button></div>
+    <div class="modal-body">
+      <div class="fg"><label>Nome</label><input type="text" id="pf-nome"></div>
+      <div class="fg"><label>E-mail</label><input type="email" id="pf-email"></div>
+      <div class="r2"><div class="fg"><label>Senha</label><input type="password" id="pf-senha"></div><div class="fg"><label>Turma</label><input type="text" id="pf-turma"></div></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="fecharModal('modal-prof')">Cancelar</button><button class="btn btn-pri" onclick="criarProf()">💾 Salvar</button></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+// ════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════
+let GAS_URL  = localStorage.getItem('edupro_url')   || '';
+let TOKEN    = localStorage.getItem('edupro_token') || '';
+let PROF     = JSON.parse(localStorage.getItem('edupro_prof') || 'null');
+let ALUNOS   = [];
+let CHAMADA  = {};
+let CHAMADAS_CACHE = {};
+let NOTAS    = [];
+let PLANO_ATUAL = null;
+let AI_HIST  = [];
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+window.onload = () => {
+  setInterval(()=>{ const el=document.getElementById('relogio'); if(el) el.textContent=new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}); },1000);
+
+  if (!GAS_URL) { showSetup(); return; }
+  if (TOKEN && PROF) { mostrarApp(); inicializar(); return; }
+  showLogin();
+};
+
+function showSetup()  { document.getElementById('setup-screen').style.display='flex'; document.getElementById('login-screen').style.display='none'; document.getElementById('app').style.display='none'; }
+function showLogin()  { document.getElementById('setup-screen').style.display='none'; document.getElementById('login-screen').style.display='flex'; document.getElementById('app').style.display='none'; }
+function mostrarApp() { document.getElementById('setup-screen').style.display='none'; document.getElementById('login-screen').style.display='none'; document.getElementById('app').style.display='flex';
+  document.getElementById('sb-nome').textContent  = PROF?.nome||'—';
+  document.getElementById('sb-turma').textContent = PROF?.turma?'Turma '+PROF.turma:PROF?.escola||'—';
+  document.getElementById('sb-escola').textContent= PROF?.escola||'EduPro';
+  if (PROF?.is_admin) document.getElementById('nav-admin').style.display='flex';
+}
+
+async function inicializar() {
+  mostrarApp();
+  await Promise.all([carregarAlunos(), carregarStats()]);
+  carregarDashboard();
+  document.getElementById('ch-data').value = hoje();
+  await carregarChamada();
+  document.getElementById('cfg-nome').value   = PROF?.nome||'';
+  document.getElementById('cfg-turma').value  = PROF?.turma||'';
+  document.getElementById('cfg-escola').value = PROF?.escola||'';
+  addMsg('Olá, **'+PROF?.nome+'**! Sou o Assistente EduPro. Como posso ajudar hoje?','ai');
+}
+
+// ════════════════════════════════════════════
+// GAS API
+// ════════════════════════════════════════════
+async function gas(path, body=null) {
+  const url = GAS_URL + '?path=' + path + (TOKEN?'&token='+encodeURIComponent(TOKEN):'');
+  const opts = body
+    ? { method:'POST', body: JSON.stringify(body), headers:{'Content-Type':'application/json'} }
+    : { method:'GET' };
+  try {
+    const r = await fetch(url, opts);
+    const d = await r.json();
+    if (d.erro) throw new Error(d.erro);
+    return d;
+  } catch(e) {
+    if (e.message.includes('autorizado')) { sair(); return null; }
+    throw e;
+  }
+}
+
+// ════════════════════════════════════════════
+// SETUP
+// ════════════════════════════════════════════
+async function testarSetup() {
+  const url = document.getElementById('setup-url').value.trim();
+  const err = document.getElementById('setup-err');
+  const ok  = document.getElementById('setup-ok');
+  const btn = document.getElementById('setup-btn');
+  if (!url) { err.textContent='Cole a URL do Apps Script'; err.style.display='block'; return; }
+  err.style.display='none'; ok.style.display='none';
+  btn.innerHTML='<span class="spin">⟳</span> Testando...'; btn.disabled=true;
+
+  try {
+    const r = await fetch(url+'?path=ping');
+    const d = await r.json();
+    if (!d.ok) throw new Error('URL inválida');
+    GAS_URL = url;
+    localStorage.setItem('edupro_url', url);
+    ok.textContent = '✅ Conexão OK! Escola: '+d.escola+'. Redirecionando...';
+    ok.style.display='block';
+    setTimeout(showLogin, 1800);
+  } catch(e) {
+    err.textContent = '❌ Erro: '+e.message+'. Verifique a URL e as permissões do Apps Script.';
+    err.style.display='block';
+  } finally { btn.innerHTML='✅ Testar e Salvar Configuração'; btn.disabled=false; }
+}
+
+function resetarSetup() { localStorage.removeItem('edupro_url'); GAS_URL=''; showSetup(); }
+
+// ════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════
+function toggleTab(tab) {
+  document.getElementById('form-login').style.display = tab==='login'?'block':'none';
+  document.getElementById('form-cad').style.display   = tab==='cad'?'block':'none';
+  document.getElementById('tab-login').style.background = tab==='login'?'var(--card)':'transparent';
+  document.getElementById('tab-login').style.color     = tab==='login'?'var(--txt)':'var(--txt3)';
+  document.getElementById('tab-cad').style.background  = tab==='cad'?'var(--card)':'transparent';
+  document.getElementById('tab-cad').style.color       = tab==='cad'?'var(--txt)':'var(--txt3)';
+}
+
+async function fazerLogin() {
+  const email=document.getElementById('li-email').value.trim();
+  const senha=document.getElementById('li-senha').value;
+  const err=document.getElementById('login-err');
+  const btn=document.getElementById('login-btn');
+  err.style.display='none'; btn.textContent='Entrando...'; btn.disabled=true;
+  try {
+    const d = await gas('auth/login', {email, senha});
+    TOKEN=d.token; PROF=d.professor;
+    localStorage.setItem('edupro_token',TOKEN); localStorage.setItem('edupro_prof',JSON.stringify(PROF));
+    await inicializar();
+  } catch(e) { err.textContent=e.message||'Erro ao entrar'; err.style.display='block'; }
+  finally { btn.textContent='Entrar →'; btn.disabled=false; }
+}
+
+async function fazerCadastro() {
+  const nome=document.getElementById('cad-nome').value.trim();
+  const email=document.getElementById('cad-email').value.trim();
+  const senha=document.getElementById('cad-senha').value;
+  const turma=document.getElementById('cad-turma').value.trim();
+  const codigo=document.getElementById('cad-codigo').value.trim();
+  const err=document.getElementById('cad-err');
+  const btn=document.getElementById('cad-btn');
+  err.style.display='none'; btn.textContent='Criando...'; btn.disabled=true;
+  try {
+    const d = await gas('auth/cadastro',{nome,email,senha,turma,codigo});
+    TOKEN=d.token; PROF=d.professor;
+    localStorage.setItem('edupro_token',TOKEN); localStorage.setItem('edupro_prof',JSON.stringify(PROF));
+    await inicializar();
+  } catch(e) { err.textContent=e.message||'Erro ao cadastrar'; err.style.display='block'; }
+  finally { btn.textContent='Criar conta →'; btn.disabled=false; }
+}
+
+function sair() { TOKEN=''; PROF=null; localStorage.removeItem('edupro_token'); localStorage.removeItem('edupro_prof'); showLogin(); }
+
+// ════════════════════════════════════════════
+// NAV
+// ════════════════════════════════════════════
+const PM={dashboard:['Dashboard','Visão geral'],chamada:['Chamada Digital','Registre a presença'],
+  frequencia:['Frequência','Acompanhamento'],planos:['Planos de Aula','Criar com IA'],
+  anotacoes:['Anotações','Observações'],ia:['Assistente IA','Chat pedagógico'],
+  relatorios:['Relatórios IA','Análises automáticas'],config:['Configurações','Perfil e API'],admin:['Admin','Professores']};
+
+function go(p) {
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  const el=document.getElementById('page-'+p); if(el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(x=>{ if(x.getAttribute('onclick')?.includes(`'${p}'`)) x.classList.add('active'); });
+  const[t,s]=PM[p]||[p,''];
+  document.getElementById('pg-ttl').textContent=t; document.getElementById('pg-sub').textContent=s;
+  if(p==='frequencia') renderFreq();
+  if(p==='anotacoes')  carregarNotas();
+  if(p==='planos')     carregarPlanos();
+  if(p==='admin')      carregarProfs();
+  if(p==='dashboard')  carregarDashboard();
+}
+
+// ════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════
+const hoje=()=>new Date().toISOString().split('T')[0];
+function toast(msg,tipo='info') {
+  const c=document.getElementById('toasts'),d=document.createElement('div');
+  d.className=`toast ${tipo}`;
+  d.innerHTML=`<span>${tipo==='ok'?'✅':tipo==='err'?'❌':'ℹ️'}</span><span>${msg}</span>`;
+  c.appendChild(d); setTimeout(()=>d.remove(),3500);
+}
+function abrirModal(id)  { document.getElementById(id).classList.add('open'); }
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ════════════════════════════════════════════
+// STATS + DASHBOARD
+// ════════════════════════════════════════════
+async function carregarStats() {
+  try {
+    const d=await gas('stats');
+    document.getElementById('s-al').textContent=d.alunos;
+    document.getElementById('s-pr').textContent=d.presentes_hoje;
+    document.getElementById('s-pl').textContent=d.planos;
+    document.getElementById('s-no').textContent=d.notas;
+  } catch(_) {}
+}
+
+async function carregarDashboard() {
+  await carregarStats();
+  // Notas
+  try {
+    const notas=(await gas('notas/listar')).slice(0,3);
+    NOTAS=notas;
+    document.getElementById('dash-notas').innerHTML=notas.length
+      ?notas.map(n=>`<div style="padding:10px 17px;border-bottom:1px solid var(--brd)"><div style="font-size:12px;font-weight:600">${n.aluno_nome}</div><div style="font-size:12px;color:var(--txt3);margin-top:2px">${n.texto.substring(0,70)}...</div></div>`).join('')
+      :'<div style="padding:28px;text-align:center;color:var(--txt3);font-size:13px">Nenhuma anotação</div>';
+  } catch(_){}
+  // Chamada hoje
+  const ch=CHAMADAS_CACHE[hoje()]||{};
+  const p=Object.values(ch).filter(v=>v==='presente').length;
+  const f=Object.values(ch).filter(v=>v==='falta').length;
+  document.getElementById('dash-chamada').innerHTML=Object.keys(ch).length
+    ?`<div style="display:flex;gap:16px;padding:13px 17px"><div style="text-align:center"><div style="font-size:22px;font-weight:700;color:var(--grn)">${p}</div><div style="font-size:11px;color:var(--txt3)">Presentes</div></div><div style="text-align:center"><div style="font-size:22px;font-weight:700;color:var(--red)">${f}</div><div style="font-size:11px;color:var(--txt3)">Faltas</div></div><div style="text-align:center"><div style="font-size:22px;font-weight:700;color:var(--pri)">${ALUNOS.length?Math.round(p/ALUNOS.length*100):0}%</div><div style="font-size:11px;color:var(--txt3)">Freq.</div></div></div>`
+    :'<div style="padding:28px;text-align:center;color:var(--txt3);font-size:13px">Chamada não feita hoje</div>';
+  // Planos
+  try {
+    const pl=(await gas('planos/listar')).slice(0,5);
+    document.getElementById('dash-planos').innerHTML=pl.length
+      ?pl.map(p=>`<tr><td><strong>${p.tema}</strong></td><td>${p.materia}</td><td>${p.serie}</td><td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--txt3)">${p.criado_em?.substring(0,10)||'—'}</td></tr>`).join('')
+      :'<tr><td colspan="4" style="text-align:center;color:var(--txt3);padding:24px">Nenhum plano ainda</td></tr>';
+  } catch(_){}
+}
+
+// ════════════════════════════════════════════
+// ALUNOS
+// ════════════════════════════════════════════
+async function carregarAlunos() {
+  try { ALUNOS=await gas('alunos/listar'); document.getElementById('nb-ch').textContent=ALUNOS.length; } catch(_){}
+}
+async function salvarAluno() {
+  const nome=document.getElementById('al-nome').value.trim();
+  if(!nome){toast('Nome obrigatório','err');return;}
+  try {
+    await gas('alunos/criar',{nome,numero:document.getElementById('al-num').value||null,sala:document.getElementById('al-sala').value.trim()||PROF?.turma});
+    await carregarAlunos(); renderChamada(); fecharModal('modal-aluno');
+    document.getElementById('al-nome').value=''; toast('Aluno cadastrado!','ok');
+  } catch(e){toast(e.message,'err');}
+}
+
+// ════════════════════════════════════════════
+// CHAMADA
+// ════════════════════════════════════════════
+function renderChamada() {
+  const grid=document.getElementById('ch-grid');
+  if(!ALUNOS.length){grid.innerHTML=`<div style="grid-column:span 5;text-align:center;padding:36px;color:var(--txt3);font-size:13px">Nenhum aluno cadastrado.<button class="btn btn-pri btn-sm" onclick="abrirModal('modal-aluno')" style="margin-left:10px">➕ Adicionar</button></div>`;return;}
+  grid.innerHTML=ALUNOS.map(a=>`<div class="ac ${CHAMADA[a.id]||''}" onclick="toggleSt('${a.id}')">
+    <div class="ac-st">${CHAMADA[a.id]==='presente'?'✅':CHAMADA[a.id]==='falta'?'❌':CHAMADA[a.id]==='justificado'?'🟡':''}</div>
+    <div class="ac-av">${a.nome.charAt(0)}</div>
+    <div class="ac-nm">${a.nome}</div>
+    <div class="ac-num">Nº ${a.numero||'—'}</div>
+  </div>`).join('');
+  atualizarCnt();
+}
+function toggleSt(id){const seq={'':'presente','presente':'falta','falta':'justificado','justificado':''};CHAMADA[id]=seq[CHAMADA[id]||''];renderChamada();}
+function marcarTodos(s){ALUNOS.forEach(a=>CHAMADA[a.id]=s);renderChamada();}
+function atualizarCnt(){const p=Object.values(CHAMADA).filter(v=>v==='presente').length;const f=Object.values(CHAMADA).filter(v=>v==='falta').length;const j=Object.values(CHAMADA).filter(v=>v==='justificado').length;document.getElementById('cnt-p').textContent=p;document.getElementById('cnt-f').textContent=f;document.getElementById('cnt-j').textContent=j;document.getElementById('cnt-pct').textContent=ALUNOS.length?Math.round(p/ALUNOS.length*100)+'%':'—';}
+
+async function carregarChamada() {
+  const data=document.getElementById('ch-data').value||hoje();
+  try {
+    const d=await gas('chamada/buscar',{data});
+    CHAMADA={};
+    Object.entries(d.registros||{}).forEach(([k,v])=>CHAMADA[k]=v);
+    if(d.materia) document.getElementById('ch-mat').value=d.materia;
+    CHAMADAS_CACHE[data]={...CHAMADA};
+  } catch(_){}
+  renderChamada();
+}
+
+async function salvarChamada() {
+  const data=document.getElementById('ch-data').value||hoje();
+  const materia=document.getElementById('ch-mat').value.trim();
+  if(!Object.keys(CHAMADA).length){toast('Marque ao menos um aluno','err');return;}
+  try {
+    await gas('chamada/salvar',{data,materia,registros:CHAMADA});
+    CHAMADAS_CACHE[data]={...CHAMADA}; await carregarStats();
+    toast('Chamada salva!','ok');
+  } catch(e){toast(e.message,'err');}
+}
+
+// ════════════════════════════════════════════
+// FREQUÊNCIA
+// ════════════════════════════════════════════
+async function renderFreq() {
+  const tb=document.getElementById('freq-tb');
+  tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px"><span class="spin">⟳</span> Carregando...</td></tr>';
+  try {
+    const todas=await gas('chamada/todas');
+    todas.forEach(ch=>{CHAMADAS_CACHE[ch.data]=ch.registros;});
+    tb.innerHTML=ALUNOS.map(a=>{
+      let p=0,f=0,j=0;
+      Object.values(CHAMADAS_CACHE).forEach(ch=>{const s=ch[a.id];if(s==='presente')p++;else if(s==='falta')f++;else if(s==='justificado')j++;});
+      const pct=Math.round(p/(p+f+j||1)*100);
+      const cl=pct>=75?'fg_':pct>=50?'fa_':'fr_';
+      const bc=pct>=75?'b-g':pct>=50?'b-a':'b-r';
+      const st=pct>=75?'Regular':pct>=50?'Atenção':'Crítico';
+      return `<tr><td>${a.numero||'—'}</td><td><strong>${a.nome}</strong></td><td style="color:var(--grn)">${p}</td><td style="color:var(--red)">${f}</td>
+        <td style="min-width:120px"><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:700">${pct}%</span><div class="fb-w" style="flex:1"><div class="fb ${cl}" style="width:${pct}%"></div></div></div></td>
+        <td><span class="badge ${bc}">${st}</span></td></tr>`;
+    }).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:24px">Faça chamadas para ver a frequência</td></tr>';
+  } catch(e){tb.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--red);padding:24px">${e.message}</td></tr>`;}
+}
+
+// ════════════════════════════════════════════
+// ANOTAÇÕES
+// ════════════════════════════════════════════
+async function carregarNotas() { try{NOTAS=await gas('notas/listar');filtrarNotas();}catch(_){} }
+function filtrarNotas() {
+  const b=(document.getElementById('busca-nota')?.value||'').toLowerCase();
+  const lista=NOTAS.filter(n=>!b||n.aluno_nome.toLowerCase().includes(b)||n.texto.toLowerCase().includes(b));
+  const el=document.getElementById('notas-lista');
+  const labels={aprendizado:'📚 Aprendizado',comportamento:'🧠 Comportamento',atencao:'⚠️ Atenção',elogio:'⭐ Elogio'};
+  el.innerHTML=lista.length?lista.map(n=>`<div class="nota-card"><div class="nota-top"><div><div class="nota-al">${n.aluno_nome}</div><div class="nota-dt">${n.criado_em?.substring(0,16)||'—'}</div></div><button class="btn btn-xs btn-red" onclick="deletarNota('${n.id}')">🗑</button></div><div class="nota-txt">${n.texto}</div><span class="tag ${n.categoria}">${labels[n.categoria]||n.categoria}</span></div>`).join('')
+    :'<div style="text-align:center;padding:44px;color:var(--txt3);font-size:13px">Nenhuma anotação</div>';
+}
+async function salvarNota() {
+  const aluno=document.getElementById('n-al').value.trim(),texto=document.getElementById('n-txt').value.trim(),cat=document.getElementById('n-cat').value;
+  if(!aluno||!texto){toast('Preencha todos os campos','err');return;}
+  try{await gas('notas/criar',{aluno_nome:aluno,categoria:cat,texto});document.getElementById('n-al').value='';document.getElementById('n-txt').value='';document.getElementById('sug-ia').style.display='none';fecharModal('modal-nota');await carregarNotas();await carregarStats();toast('Anotação salva!','ok');}catch(e){toast(e.message,'err');}
+}
+async function deletarNota(id) {
+  try{await gas('notas/excluir',{id});await carregarNotas();await carregarStats();toast('Removida','info');}catch(e){toast(e.message,'err');}
+}
+
+// ════════════════════════════════════════════
+// PLANOS
+// ════════════════════════════════════════════
+async function carregarPlanos() {
+  try{const p=await gas('planos/listar');document.getElementById('planos-lista').innerHTML=p.length?p.map(x=>`<div style="padding:10px 14px;border-bottom:1px solid var(--brd);cursor:pointer" onclick='verPlano(${JSON.stringify(x)})'><div style="font-size:13px;font-weight:600">${x.tema}</div><div style="font-size:11px;color:var(--txt3)">${x.materia} · ${x.serie} · ${x.criado_em?.substring(0,10)||'—'}</div></div>`).join(''):'<div style="padding:16px;text-align:center;color:var(--txt3);font-size:13px">Nenhum plano salvo</div>';}catch(_){}
+}
+function verPlano(p){document.getElementById('plano-ph').style.display='none';document.getElementById('plano-content').style.display='block';document.getElementById('plano-content').textContent=p.conteudo||'';document.getElementById('plano-ac').style.display='flex';document.getElementById('plano-ttl').textContent='📄 '+p.tema;PLANO_ATUAL=p;}
+async function gerarPlano() {
+  const mat=document.getElementById('pl-mat').value.trim(),ser=document.getElementById('pl-ser').value.trim(),tema=document.getElementById('pl-tema').value.trim(),dur=document.getElementById('pl-dur').value.trim(),obj=document.getElementById('pl-obj').value.trim(),obs=document.getElementById('pl-obs').value.trim();
+  if(!mat||!ser||!tema){toast('Preencha matéria, série e tema','err');return;}
+  const btn=document.getElementById('btn-gerar');btn.innerHTML='<span class="spin">⟳</span> Gerando...';btn.disabled=true;
+  document.getElementById('plano-ph').style.display='none';document.getElementById('plano-content').style.display='block';document.getElementById('plano-content').textContent='A IA está elaborando seu plano...\nAguarde...';
+  try {
+    const d=await chamarAI(`Crie um plano de aula completo:\nMatéria: ${mat}\nSérie: ${ser}\nTema: ${tema}\nDuração: ${dur||'50 minutos'}\nObjetivo: ${obj||'Não especificado'}\n${obs?'Observações: '+obs:''}\n\nInclua: identificação, objetivos, conteúdo, metodologia, recursos, desenvolvimento detalhado com tempos, avaliação e referências.`);
+    document.getElementById('plano-content').textContent=d;document.getElementById('plano-ac').style.display='flex';
+    PLANO_ATUAL={materia:mat,serie:ser,tema,duracao:dur,objetivo:obj,conteudo:d};
+  } catch(e){document.getElementById('plano-content').textContent='❌ '+e.message;}
+  btn.innerHTML='✨ Gerar Plano com IA';btn.disabled=false;
+}
+async function salvarPlano(){if(!PLANO_ATUAL)return;try{await gas('planos/criar',PLANO_ATUAL);await carregarPlanos();await carregarStats();toast('Plano salvo!','ok');}catch(e){toast(e.message,'err');}}
+function copiarPlano(){navigator.clipboard.writeText(document.getElementById('plano-content').textContent).then(()=>toast('Copiado!','ok'));}
+
+// ════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════
+async function salvarConfig() {
+  const nome=document.getElementById('cfg-nome').value.trim(),turma=document.getElementById('cfg-turma').value.trim(),escola=document.getElementById('cfg-escola').value.trim(),api_key=document.getElementById('cfg-api').value.trim(),senha=document.getElementById('cfg-senha').value.trim();
+  try{
+    await gas('prof/atualizar',{nome,turma,escola,api_key,senha:senha||undefined});
+    PROF={...PROF,nome,turma,escola};localStorage.setItem('edupro_prof',JSON.stringify(PROF));
+    document.getElementById('sb-nome').textContent=nome;document.getElementById('sb-turma').textContent='Turma '+turma;
+    toast('Configurações salvas!','ok');
+  }catch(e){toast(e.message,'err');}
+}
+
+// ════════════════════════════════════════════
+// ADMIN
+// ════════════════════════════════════════════
+async function carregarProfs(){try{const p=await gas('admin/professores');document.getElementById('prof-tb').innerHTML=p.map(x=>`<tr><td><strong>${x.nome}</strong></td><td>${x.email}</td><td>${x.turma||'—'}</td><td>${x.is_admin?'<span class="badge b-b">Admin</span>':'—'}</td><td><button class="btn btn-xs btn-red" onclick="deletarProf('${x.id}')">🗑</button></td></tr>`).join('');}catch(e){toast(e.message,'err');}}
+async function criarProf(){try{await gas('admin/criar-prof',{nome:document.getElementById('pf-nome').value.trim(),email:document.getElementById('pf-email').value.trim(),senha:document.getElementById('pf-senha').value,turma:document.getElementById('pf-turma').value.trim(),codigo:'EDUPRO2025'});fecharModal('modal-prof');await carregarProfs();toast('Professor criado!','ok');}catch(e){toast(e.message,'err');}}
+async function deletarProf(id){if(!confirm('Excluir professor?'))return;try{await gas('admin/excluir-prof',{id});await carregarProfs();toast('Removido','info');}catch(e){toast(e.message,'err');}}
+
+// ════════════════════════════════════════════
+// IA — CHAT
+// ════════════════════════════════════════════
+function addMsg(txt,tipo){const c=document.getElementById('ai-msgs'),d=document.createElement('div');d.className=`msg ${tipo}`;const h=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});d.innerHTML=`<div class="msg-av">${tipo==='ai'?'🤖':'👤'}</div><div><div class="msg-bbl">${txt.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</div><div class="msg-ts">${h}</div></div>`;c.appendChild(d);c.scrollTop=c.scrollHeight;return d;}
+function addTyping(){const c=document.getElementById('ai-msgs'),d=document.createElement('div');d.className='msg ai';d.innerHTML=`<div class="msg-av">🤖</div><div class="msg-bbl"><div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>`;c.appendChild(d);c.scrollTop=c.scrollHeight;return d;}
+
+async function enviarIA(){const inp=document.getElementById('ai-inp');const msg=inp.value.trim();if(!msg)return;inp.value='';inp.style.height='auto';addMsg(msg,'user');AI_HIST.push({role:'user',content:msg});document.getElementById('ai-chips').style.display='none';const tp=addTyping();try{const r=await chamarAI(msg,AI_HIST.slice(-8));tp.remove();addMsg(r,'ai');AI_HIST.push({role:'assistant',content:r});}catch(e){tp.remove();addMsg('❌ '+e.message,'ai');}}
+function useChip(el){document.getElementById('ai-inp').value=el.textContent;enviarIA();}
+
+// ════════════════════════════════════════════
+// IA — RELATÓRIOS
+// ════════════════════════════════════════════
+async function gerarRel(tipo){
+  const card=document.getElementById('rel-card'),content=document.getElementById('rel-content'),ttl=document.getElementById('rel-ttl');
+  card.style.display='block';content.textContent='⟳ Gerando com IA...';
+  const aList=ALUNOS.map(a=>a.nome).join(', ');
+  const totalDias=Object.keys(CHAMADAS_CACHE).length;
+  let prompt='';
+  if(tipo==='frequencia'){ttl.textContent='📊 Relatório de Frequência';const dados=ALUNOS.map(a=>{let p=0,f=0;Object.values(CHAMADAS_CACHE).forEach(ch=>{if(ch[a.id]==='presente')p++;else if(ch[a.id]==='falta')f++;});return`${a.nome}: ${p}P/${f}F (${Math.round(p/(p+f||1)*100)}%)`;}).join('\n');prompt=`Relatório pedagógico formal de frequência. Turma: ${PROF?.turma||'—'}, ${ALUNOS.length} alunos, ${totalDias} dias.\n\n${dados}\n\nInclua: resumo, críticos (<75%), recomendações. Tom formal.`;}
+  else if(tipo==='turma'){ttl.textContent='👥 Relatório da Turma';const notas=NOTAS.map(n=>`${n.aluno_nome} (${n.categoria}): ${n.texto}`).join('\n');prompt=`Relatório pedagógico da turma ${PROF?.turma||'—'}. Alunos: ${aList}.\n\nAnotações:\n${notas||'Nenhuma'}\n\nInclua: perfil, destaques, atenção, recomendações. Formal.`;}
+  else{ttl.textContent='✉️ Comunicado para Pais';prompt=`Comunicado formal para pais da turma ${PROF?.turma||'—'} (${ALUNOS.length} alunos). Inclua: saudação, andamento, próximos eventos, orientações. Respeitoso e acolhedor.`;}
+  try{const r=await chamarAI(prompt);content.textContent=r;}catch(e){content.textContent='❌ '+e.message;}
+  card.scrollIntoView({behavior:'smooth'});
+}
+
+async function sugestaoIA(){const aluno=document.getElementById('n-al').value.trim(),txt=document.getElementById('n-txt').value.trim(),cat=document.getElementById('n-cat').value,box=document.getElementById('sug-ia');box.style.display='block';box.textContent='🤖 Pensando...';try{const r=await chamarAI(`Anotação sobre "${aluno}" (${cat}): "${txt}"\n\nSugira: complemento, estratégias pedagógicas e como comunicar aos pais.`);box.innerHTML='<strong style="color:var(--pur)">✨ Sugestão:</strong><br><br>'+r.replace(/\n/g,'<br>');}catch(e){box.textContent='❌ '+e.message;}}
+async function analisarTurmaIA(){const el=document.getElementById('analise-content');el.innerHTML='<div style="text-align:center;padding:20px"><span class="spin">⟳</span></div>';const notas=NOTAS.map(n=>`${n.aluno_nome} (${n.categoria}): ${n.texto}`).join('\n');try{const r=await chamarAI(`Analise anotações e dê insights:\n\n${notas||'Nenhuma'}\n\nIdentifique: padrões, atenção especial, pontos positivos, 3 recomendações práticas.`);el.innerHTML='<div style="font-size:13px;line-height:1.7;color:var(--txt2)">'+r.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong style="color:var(--pur)">$1</strong>')+'</div>';}catch(e){el.innerHTML='<div style="color:var(--red);font-size:13px">❌ '+e.message+'</div>';}}
+
+// ════════════════════════════════════════════
+// ANTHROPIC API (direto do browser)
+// ════════════════════════════════════════════
+async function chamarAI(prompt, history=[]) {
+  // Busca api_key: primeiro do perfil salvo, depois pede
+  let apiKey = localStorage.getItem('edupro_apikey') || '';
+  if (!apiKey) {
+    apiKey = prompt('Cole sua chave API Anthropic (sk-ant-...):\nObtenda grátis em console.anthropic.com');
+    if (!apiKey) throw new Error('Chave API necessária');
+    localStorage.setItem('edupro_apikey', apiKey);
+  }
+
+  const messages = history.length
+    ? [...history, {role:'user',content:prompt}]
+    : [{role:'user',content:prompt}];
+
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514', max_tokens:1500,
+      system:`Você é o Assistente EduPro, auxiliar pedagógico inteligente. Professor: ${PROF?.nome||'—'}, Turma: ${PROF?.turma||'—'}. Responda em português, prático e pedagógico.`,
+      messages
+    })
+  });
+
+  if (!r.ok) {
+    const e=await r.json();
+    if (e.error?.type==='authentication_error') { localStorage.removeItem('edupro_apikey'); throw new Error('Chave API inválida. Tente novamente.'); }
+    throw new Error(e.error?.message||'Erro na API');
+  }
+  const d=await r.json();
+  return d.content[0].text;
+}
+
+// ════════════════════════════════════════════
+// EXPORTAÇÃO EXCEL (SheetJS)
+// ════════════════════════════════════════════
+function exportFreq(){
+  if(!Object.keys(CHAMADAS_CACHE).length){toast('Faça chamadas primeiro','err');return;}
+  const wb=XLSX.utils.book_new(),hoje_s=new Date().toLocaleDateString('pt-BR'),datas=Object.keys(CHAMADAS_CACHE).sort();
+  const r1=[['RELATÓRIO DE FREQUÊNCIA — EduPro'],[`Professor(a): ${PROF?.nome} | Turma: ${PROF?.turma||'—'} | ${hoje_s}`],[],['#','Nome','Sala','Presenças','Faltas','Justificados','Freq.%','Status']];
+  ALUNOS.forEach(a=>{let p=0,f=0,j=0;Object.values(CHAMADAS_CACHE).forEach(ch=>{if(ch[a.id]==='presente')p++;else if(ch[a.id]==='falta')f++;else if(ch[a.id]==='justificado')j++;});const pct=Math.round(p/(p+f+j||1)*100);r1.push([a.numero||'',a.nome,a.sala||'',p,f,j,pct+'%',pct>=75?'Regular':pct>=50?'Atenção':'Crítico']);});
+  const ws1=XLSX.utils.aoa_to_sheet(r1);ws1['!cols']=[{wch:5},{wch:28},{wch:8},{wch:12},{wch:8},{wch:14},{wch:12},{wch:10}];ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:7}},{s:{r:1,c:0},e:{r:1,c:7}}];XLSX.utils.book_append_sheet(wb,ws1,'Frequência');
+  const r2=[['CHAMADAS DIÁRIAS'],['Aluno','Sala',...datas]];ALUNOS.forEach(a=>{r2.push([a.nome,a.sala||'',...datas.map(d=>{const s=(CHAMADAS_CACHE[d]||{})[a.id];return s==='presente'?'P':s==='falta'?'F':s==='justificado'?'J':'';})])});r2.push([],[],['P=Presente','F=Falta','J=Justificado']);
+  const ws2=XLSX.utils.aoa_to_sheet(r2);ws2['!cols']=[{wch:28},{wch:8},...datas.map(()=>({wch:12}))];XLSX.utils.book_append_sheet(wb,ws2,'Chamadas');
+  XLSX.writeFile(wb,`Frequencia_EduPro_${hoje()}.xlsx`);toast('✅ Excel gerado!','ok');
+}
+
+function exportNotas(){
+  if(!NOTAS.length){toast('Nenhuma anotação','err');return;}
+  const wb=XLSX.utils.book_new();const cats={aprendizado:'Aprendizado',comportamento:'Comportamento',atencao:'Atenção',elogio:'Elogio'};
+  const rows=[['ANOTAÇÕES — EduPro'],[`Professor(a): ${PROF?.nome} | ${new Date().toLocaleDateString('pt-BR')}`],[],['Data','Hora','Aluno','Categoria','Anotação']];
+  NOTAS.forEach(n=>{const dt=n.criado_em||'';rows.push([dt.substring(0,10),dt.substring(11,16),n.aluno_nome,cats[n.categoria]||n.categoria,n.texto]);});
+  const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:12},{wch:8},{wch:25},{wch:16},{wch:60}];ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:4}},{s:{r:1,c:0},e:{r:1,c:4}}];XLSX.utils.book_append_sheet(wb,ws,'Anotações');
+  XLSX.writeFile(wb,`Anotacoes_EduPro_${hoje()}.xlsx`);toast('✅ Excel gerado!','ok');
+}
+
+async function exportPlanos(){
+  try{const p=await gas('planos/listar');if(!p.length){toast('Nenhum plano','err');return;}
+  const wb=XLSX.utils.book_new();const rows=[['PLANOS DE AULA — EduPro'],[`Professor(a): ${PROF?.nome} | ${new Date().toLocaleDateString('pt-BR')}`],[],['#','Matéria','Série','Tema','Duração','Data']];
+  p.forEach((x,i)=>rows.push([i+1,x.materia,x.serie,x.tema,x.duracao||'—',x.criado_em?.substring(0,10)||'—']));
+  const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:5},{wch:16},{wch:12},{wch:40},{wch:12},{wch:14}];ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}},{s:{r:1,c:0},e:{r:1,c:5}}];XLSX.utils.book_append_sheet(wb,ws,'Índice');
+  p.slice(0,10).forEach((x,i)=>{const lines=(x.conteudo||'').split('\n').map(l=>[l]);const wsp=XLSX.utils.aoa_to_sheet([[`PLANO: ${x.tema}`],[`${x.materia} | ${x.serie}`],[],...lines]);wsp['!cols']=[{wch:100}];XLSX.utils.book_append_sheet(wb,wsp,`Plano ${i+1}`.substring(0,31));});
+  XLSX.writeFile(wb,`Planos_EduPro_${hoje()}.xlsx`);toast('✅ Excel gerado!','ok');}catch(e){toast(e.message,'err');}
+}
+</script>
+</body>
+</html>
